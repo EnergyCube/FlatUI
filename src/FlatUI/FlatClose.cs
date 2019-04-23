@@ -7,120 +7,108 @@ using System.Windows.Forms;
 
 namespace FlatUI
 {
-	public class FlatClose : Control
-	{
-		private MouseState State = MouseState.None;
-		private int x;
+    public sealed class FlatClose : Control
+    {
+        private MouseState _state = MouseState.None;
 
-		protected override void OnMouseEnter(EventArgs e)
-		{
-			base.OnMouseEnter(e);
-			State = MouseState.Over;
-			Invalidate();
-		}
+        public FlatClose()
+        {
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw |
+                ControlStyles.OptimizedDoubleBuffer, true);
+            DoubleBuffered = true;
+            BackColor = Color.White;
+            Size = new Size(18, 18);
+            Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            Font = new Font("Marlett", 10);
+        }
 
-		protected override void OnMouseDown(MouseEventArgs e)
-		{
-			base.OnMouseDown(e);
-			State = MouseState.Down;
-			Invalidate();
-		}
+        [Category("Colors")] public Color BaseColor { get; set; } = Color.FromArgb(168, 35, 35);
 
-		protected override void OnMouseLeave(EventArgs e)
-		{
-			base.OnMouseLeave(e);
-			State = MouseState.None;
-			Invalidate();
-		}
+        [Category("Colors")] public Color TextColor { get; set; } = Color.FromArgb(243, 243, 243);
 
-		protected override void OnMouseUp(MouseEventArgs e)
-		{
-			base.OnMouseUp(e);
-			State = MouseState.Over;
-			Invalidate();
-		}
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            _state = MouseState.Over;
+            Invalidate();
+        }
 
-		protected override void OnMouseMove(MouseEventArgs e)
-		{
-			base.OnMouseMove(e);
-			x = e.X;
-			Invalidate();
-		}
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            _state = MouseState.Down;
+            Invalidate();
+        }
 
-		protected override void OnClick(EventArgs e)
-		{
-			base.OnClick(e);
-			Environment.Exit(0);
-		}
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            _state = MouseState.None;
+            Invalidate();
+        }
 
-		protected override void OnResize(EventArgs e)
-		{
-			base.OnResize(e);
-			Size = new Size(18, 18);
-		}
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            _state = MouseState.Over;
+            Invalidate();
+        }
 
-		[Category("Colors")]
-		public Color BaseColor
-		{
-			get { return _BaseColor; }
-			set { _BaseColor = value; }
-		}
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            Invalidate();
+        }
 
-		[Category("Colors")]
-		public Color TextColor
-		{
-			get { return _TextColor; }
-			set { _TextColor = value; }
-		}
+        protected override void OnClick(EventArgs e)
+        {
+            base.OnClick(e);
+            Environment.Exit(0);
+        }
 
-		private Color _BaseColor = Color.FromArgb(168, 35, 35);
-		private Color _TextColor = Color.FromArgb(243, 243, 243);
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            Size = new Size(18, 18);
+        }
 
-		public FlatClose()
-		{
-			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer, true);
-			DoubleBuffered = true;
-			BackColor = Color.White;
-			Size = new Size(18, 18);
-			Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			Font = new Font("Marlett", 10);
-		}
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var b = new Bitmap(Width, Height);
+            var g = Graphics.FromImage(b);
 
-		protected override void OnPaint(PaintEventArgs e)
-		{
-			Bitmap B = new Bitmap(Width, Height);
-			Graphics G = Graphics.FromImage(B);
+            var Base = new Rectangle(0, 0, Width, Height);
 
-			Rectangle Base = new Rectangle(0, 0, Width, Height);
+            var with3 = g;
+            with3.SmoothingMode = SmoothingMode.HighQuality;
+            with3.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            with3.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            with3.Clear(BackColor);
 
-			var _with3 = G;
-			_with3.SmoothingMode = SmoothingMode.HighQuality;
-			_with3.PixelOffsetMode = PixelOffsetMode.HighQuality;
-			_with3.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-			_with3.Clear(BackColor);
+            //-- Base
+            with3.FillRectangle(new SolidBrush(BaseColor), Base);
 
-			//-- Base
-			_with3.FillRectangle(new SolidBrush(_BaseColor), Base);
+            //-- X
+            with3.DrawString("r", Font, new SolidBrush(TextColor), new Rectangle(0, 0, Width, Height),
+                Helpers.CenterSf);
 
-			//-- X
-			_with3.DrawString("r", Font, new SolidBrush(TextColor), new Rectangle(0, 0, Width, Height), Helpers.CenterSF);
+            //-- Hover/down
+            switch (_state)
+            {
+                case MouseState.Over:
+                    with3.FillRectangle(new SolidBrush(Color.FromArgb(30, Color.White)), Base);
+                    break;
+                case MouseState.Down:
+                    with3.FillRectangle(new SolidBrush(Color.FromArgb(30, Color.Black)), Base);
+                    break;
+            }
 
-			//-- Hover/down
-			switch (State)
-			{
-				case MouseState.Over:
-					_with3.FillRectangle(new SolidBrush(Color.FromArgb(30, Color.White)), Base);
-					break;
-				case MouseState.Down:
-					_with3.FillRectangle(new SolidBrush(Color.FromArgb(30, Color.Black)), Base);
-					break;
-			}
-
-			base.OnPaint(e);
-			G.Dispose();
-			e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-			e.Graphics.DrawImageUnscaled(B, 0, 0);
-			B.Dispose();
-		}
-	}
+            base.OnPaint(e);
+            g.Dispose();
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.DrawImageUnscaled(b, 0, 0);
+            b.Dispose();
+        }
+    }
 }

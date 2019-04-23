@@ -7,189 +7,152 @@ using System.Windows.Forms;
 
 namespace FlatUI
 {
-	public class FlatListBox : Control
-	{
-		private ListBox withEventsField_ListBx = new ListBox();
-		private ListBox ListBx
-		{
-			get { return withEventsField_ListBx; }
-			set
-			{
-				if (withEventsField_ListBx != null)
-				{
-					withEventsField_ListBx.DrawItem -= Drawitem;
-				}
-				withEventsField_ListBx = value;
-				if (withEventsField_ListBx != null)
-				{
-					withEventsField_ListBx.DrawItem += Drawitem;
-				}
-			}
-		}
+    public sealed class FlatListBox : Control
+    {
+        private readonly Color _baseColor = Color.FromArgb(45, 47, 49);
+        private ListBox _withEventsFieldListBx = new ListBox();
 
-		private string[] _items = { "" };
+        public FlatListBox()
+        {
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw |
+                ControlStyles.OptimizedDoubleBuffer, true);
+            DoubleBuffered = true;
 
-		[Category("Options")]
-		public string[] items
-		{
-			get { return _items; }
-			set
-			{
-				_items = value;
-				ListBx.Items.Clear();
-				ListBx.Items.AddRange(value);
-				Invalidate();
-			}
-		}
+            ListBx.DrawMode = DrawMode.OwnerDrawFixed;
+            ListBx.ScrollAlwaysVisible = false;
+            ListBx.HorizontalScrollbar = false;
+            ListBx.BorderStyle = BorderStyle.None;
+            ListBx.BackColor = _baseColor;
+            ListBx.ForeColor = Color.White;
+            ListBx.Location = new Point(3, 3);
+            ListBx.Font = new Font("Segoe UI", 8);
+            ListBx.ItemHeight = 20;
+            ListBx.Items.Clear();
+            ListBx.IntegralHeight = false;
 
-		[Category("Colors")]
-		public Color SelectedColor
-		{
-			get { return _SelectedColor; }
-			set { _SelectedColor = value; }
-		}
+            Size = new Size(131, 101);
+            BackColor = _baseColor;
+        }
 
-		public string SelectedItem
-		{
-			get { return ListBx.SelectedItem.ToString(); }
-		}
+        private ListBox ListBx
+        {
+            get => _withEventsFieldListBx;
+            set
+            {
+                if (_withEventsFieldListBx != null) _withEventsFieldListBx.DrawItem -= Drawitem;
 
-		public int SelectedIndex
-		{
-			get
-			{
-				int functionReturnValue = 0;
-				return ListBx.SelectedIndex;
-				if (ListBx.SelectedIndex < 0)
-					return functionReturnValue;
-				return functionReturnValue;
-			}
-		}
+                _withEventsFieldListBx = value;
 
-		public void Clear()
-		{
-			ListBx.Items.Clear();
-		}
+                if (_withEventsFieldListBx != null) _withEventsFieldListBx.DrawItem += Drawitem;
+            }
+        }
 
-		public void ClearSelected()
-		{
-			for (int i = (ListBx.SelectedItems.Count - 1); i >= 0; i += -1)
-			{
-				ListBx.Items.Remove(ListBx.SelectedItems[i]);
-			}
-		}
+        [Category("Options")] public ListBox.ObjectCollection Items => ListBx.Items;
 
-		public void Drawitem(object sender, DrawItemEventArgs e)
-		{
-			if (e.Index < 0)
-				return;
-			e.DrawBackground();
-			e.DrawFocusRectangle();
+        [Category("Colors")] public Color SelectedColor { get; set; } = Helpers.FlatColor;
 
-			e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
-			e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-			e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-			e.Graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+        public string SelectedItem => ListBx.SelectedItem.ToString();
+        public int SelectedIndex => ListBx.SelectedIndex;
 
-			//-- if selected
-			if (e.State.ToString().IndexOf("Selected,") >= 0)
-			{
-				//-- Base
-				e.Graphics.FillRectangle(new SolidBrush(_SelectedColor), new Rectangle(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height));
+        public void Clear()
+        {
+            ListBx.Items.Clear();
+        }
 
-				//-- Text
-				e.Graphics.DrawString(" " + ListBx.Items[e.Index].ToString(), new Font("Segoe UI", 8), Brushes.White, e.Bounds.X, e.Bounds.Y + 2);
-			}
-			else
-			{
-				//-- Base
-				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(51, 53, 55)), new Rectangle(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height));
+        public void ClearSelected()
+        {
+            for (var i = ListBx.SelectedItems.Count - 1; i >= 0; i += -1) ListBx.Items.Remove(ListBx.SelectedItems[i]);
+        }
 
-				//-- Text 
-				e.Graphics.DrawString(" " + ListBx.Items[e.Index].ToString(), new Font("Segoe UI", 8), Brushes.White, e.Bounds.X, e.Bounds.Y + 2);
-			}
+        public void Drawitem(object sender, DrawItemEventArgs e)
+        {
+            if (e.Index < 0)
+                return;
 
-			e.Graphics.Dispose();
-		}
+            e.DrawBackground();
+            e.DrawFocusRectangle();
 
-		protected override void OnCreateControl()
-		{
-			base.OnCreateControl();
-			if (!Controls.Contains(ListBx))
-			{
-				Controls.Add(ListBx);
-			}
-		}
+            e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
-		public void AddRange(object[] items)
-		{
-			ListBx.Items.Remove("");
-			ListBx.Items.AddRange(items);
-		}
+            //-- if selected
+            if (e.State.ToString().IndexOf("Selected,", StringComparison.Ordinal) >= 0)
+            {
+                //-- Base
+                e.Graphics.FillRectangle(new SolidBrush(SelectedColor),
+                    new Rectangle(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height));
 
-		public void AddItem(object item)
-		{
-			ListBx.Items.Remove("");
-			ListBx.Items.Add(item);
-		}
+                //-- Text
+                e.Graphics.DrawString(" " + ListBx.Items[e.Index], new Font("Segoe UI", 8), Brushes.White, e.Bounds.X,
+                    e.Bounds.Y + 2);
+            }
+            else
+            {
+                //-- Base
+                e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(51, 53, 55)),
+                    new Rectangle(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height));
 
-		private Color BaseColor = Color.FromArgb(45, 47, 49);
-		private Color _SelectedColor = Helpers.FlatColor;
+                //-- Text 
+                e.Graphics.DrawString(" " + ListBx.Items[e.Index], new Font("Segoe UI", 8), Brushes.White, e.Bounds.X,
+                    e.Bounds.Y + 2);
+            }
 
-		public FlatListBox()
-		{
-			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer, true);
-			DoubleBuffered = true;
+            e.Graphics.Dispose();
+        }
 
-			ListBx.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-			ListBx.ScrollAlwaysVisible = false;
-			ListBx.HorizontalScrollbar = false;
-			ListBx.BorderStyle = BorderStyle.None;
-			ListBx.BackColor = BaseColor;
-			ListBx.ForeColor = Color.White;
-			ListBx.Location = new Point(3, 3);
-			ListBx.Font = new Font("Segoe UI", 8);
-			ListBx.ItemHeight = 20;
-			ListBx.Items.Clear();
-			ListBx.IntegralHeight = false;
+        protected override void OnCreateControl()
+        {
+            base.OnCreateControl();
+            if (!Controls.Contains(ListBx)) Controls.Add(ListBx);
+        }
 
-			Size = new Size(131, 101);
-			BackColor = BaseColor;
-		}
+        public void AddRange(object[] items)
+        {
+            ListBx.Items.Remove("");
+            ListBx.Items.AddRange(items);
+        }
 
-		protected override void OnPaint(PaintEventArgs e)
-		{
-			this.UpdateColors();
+        public void AddItem(object item)
+        {
+            ListBx.Items.Remove("");
+            ListBx.Items.Add(item);
+        }
 
-			Bitmap B = new Bitmap(Width, Height);
-			Graphics G = Graphics.FromImage(B);
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            UpdateColors();
 
-			Rectangle Base = new Rectangle(0, 0, Width, Height);
+            var b = new Bitmap(Width, Height);
+            var g = Graphics.FromImage(b);
 
-			var _with19 = G;
-			_with19.SmoothingMode = SmoothingMode.HighQuality;
-			_with19.PixelOffsetMode = PixelOffsetMode.HighQuality;
-			_with19.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-			_with19.Clear(BackColor);
+            var Base = new Rectangle(0, 0, Width, Height);
 
-			//-- Size
-			ListBx.Size = new Size(Width - 6, Height - 2);
+            var with19 = g;
+            with19.SmoothingMode = SmoothingMode.HighQuality;
+            with19.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            with19.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            with19.Clear(BackColor);
 
-			//-- Base
-			_with19.FillRectangle(new SolidBrush(BaseColor), Base);
+            //-- Size
+            ListBx.Size = new Size(Width - 6, Height - 2);
 
-			base.OnPaint(e);
-			G.Dispose();
-			e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-			e.Graphics.DrawImageUnscaled(B, 0, 0);
-			B.Dispose();
-		}
+            //-- Base
+            with19.FillRectangle(new SolidBrush(_baseColor), Base);
 
-		private void UpdateColors()
-		{
-			FlatColors colors = Helpers.GetColors(this);
+            base.OnPaint(e);
+            g.Dispose();
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.DrawImageUnscaled(b, 0, 0);
+            b.Dispose();
+        }
 
-			_SelectedColor = colors.Flat;
-		}
-	}
+        private void UpdateColors()
+        {
+            var colors = Helpers.GetColors(this);
+            SelectedColor = colors.Flat;
+        }
+    }
 }

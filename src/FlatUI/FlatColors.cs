@@ -2,8 +2,8 @@
 
 namespace FlatUI
 {
-	public class FlatColors
-	{
-		public Color Flat = Helpers.FlatColor;
-	}
+    public class FlatColors
+    {
+        public Color Flat = Helpers.FlatColor;
+    }
 }

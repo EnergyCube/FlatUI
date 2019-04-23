@@ -5,113 +5,116 @@ using System.Windows.Forms;
 
 namespace FlatUI
 {
-	public static class Helpers
-	{
-		public static Color FlatColor = Color.FromArgb(35, 168, 109);
+    public static class Helpers
+    {
+        public static Color FlatColor = Color.FromArgb(35, 168, 109);
 
-		public static readonly StringFormat NearSF = new StringFormat
-		{
-			Alignment = StringAlignment.Near,
-			LineAlignment = StringAlignment.Near
-		};
+        public static readonly StringFormat NearSf = new StringFormat
+        {
+            Alignment = StringAlignment.Near,
+            LineAlignment = StringAlignment.Near
+        };
 
-		public static readonly StringFormat CenterSF = new StringFormat
-		{
-			Alignment = StringAlignment.Center,
-			LineAlignment = StringAlignment.Center
-		};
+        public static readonly StringFormat CenterSf = new StringFormat
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center
+        };
 
-		public static GraphicsPath RoundRec(Rectangle Rectangle, int Curve)
-		{
-			GraphicsPath P = new GraphicsPath();
-			int ArcRectangleWidth = Curve * 2;
-			P.AddArc(new Rectangle(Rectangle.X, Rectangle.Y, ArcRectangleWidth, ArcRectangleWidth), -180, 90);
-			P.AddArc(new Rectangle(Rectangle.Width - ArcRectangleWidth + Rectangle.X, Rectangle.Y, ArcRectangleWidth, ArcRectangleWidth), -90, 90);
-			P.AddArc(new Rectangle(Rectangle.Width - ArcRectangleWidth + Rectangle.X, Rectangle.Height - ArcRectangleWidth + Rectangle.Y, ArcRectangleWidth, ArcRectangleWidth), 0, 90);
-			P.AddArc(new Rectangle(Rectangle.X, Rectangle.Height - ArcRectangleWidth + Rectangle.Y, ArcRectangleWidth, ArcRectangleWidth), 90, 90);
-			P.AddLine(new Point(Rectangle.X, Rectangle.Height - ArcRectangleWidth + Rectangle.Y), new Point(Rectangle.X, Curve + Rectangle.Y));
-			return P;
-		}
+        public static GraphicsPath RoundRec(Rectangle rectangle, int curve)
+        {
+            var p = new GraphicsPath();
+            var arcRectangleWidth = curve * 2;
+            p.AddArc(new Rectangle(rectangle.X, rectangle.Y, arcRectangleWidth, arcRectangleWidth), -180, 90);
+            p.AddArc(
+                new Rectangle(rectangle.Width - arcRectangleWidth + rectangle.X, rectangle.Y, arcRectangleWidth,
+                    arcRectangleWidth), -90, 90);
+            p.AddArc(
+                new Rectangle(rectangle.Width - arcRectangleWidth + rectangle.X,
+                    rectangle.Height - arcRectangleWidth + rectangle.Y, arcRectangleWidth, arcRectangleWidth), 0, 90);
+            p.AddArc(
+                new Rectangle(rectangle.X, rectangle.Height - arcRectangleWidth + rectangle.Y, arcRectangleWidth,
+                    arcRectangleWidth), 90, 90);
+            p.AddLine(new Point(rectangle.X, rectangle.Height - arcRectangleWidth + rectangle.Y),
+                new Point(rectangle.X, curve + rectangle.Y));
+            return p;
+        }
 
-		public static GraphicsPath RoundRect(float x, float y, float w, float h, double r = 0.3,
-			bool TL = true, bool TR = true, bool BR = true, bool BL = true)
-		{
-			GraphicsPath functionReturnValue = null;
-			float d = Math.Min(w, h) * (float)r;
-			float xw = x + w;
-			float yh = y + h;
-			functionReturnValue = new GraphicsPath();
+        public static GraphicsPath RoundRect(float x, float y, float w, float h, double r = 0.3,
+            bool tl = true, bool tr = true, bool br = true, bool bl = true)
+        {
+            var d = Math.Min(w, h) * (float) r;
+            var xw = x + w;
+            var yh = y + h;
+            var functionReturnValue = new GraphicsPath();
 
-			var _with1 = functionReturnValue;
-			if (TL)
-				_with1.AddArc(x, y, d, d, 180, 90);
-			else
-				_with1.AddLine(x, y, x, y);
-			if (TR)
-				_with1.AddArc(xw - d, y, d, d, 270, 90);
-			else
-				_with1.AddLine(xw, y, xw, y);
-			if (BR)
-				_with1.AddArc(xw - d, yh - d, d, d, 0, 90);
-			else
-				_with1.AddLine(xw, yh, xw, yh);
-			if (BL)
-				_with1.AddArc(x, yh - d, d, d, 90, 90);
-			else
-				_with1.AddLine(x, yh, x, yh);
+            var with1 = functionReturnValue;
+            if (tl)
+                with1.AddArc(x, y, d, d, 180, 90);
+            else
+                with1.AddLine(x, y, x, y);
+            if (tr)
+                with1.AddArc(xw - d, y, d, d, 270, 90);
+            else
+                with1.AddLine(xw, y, xw, y);
+            if (br)
+                with1.AddArc(xw - d, yh - d, d, d, 0, 90);
+            else
+                with1.AddLine(xw, yh, xw, yh);
+            if (bl)
+                with1.AddArc(x, yh - d, d, d, 90, 90);
+            else
+                with1.AddLine(x, yh, x, yh);
 
-			_with1.CloseFigure();
-			return functionReturnValue;
-		}
+            with1.CloseFigure();
+            return functionReturnValue;
+        }
 
-		//-- Credit: AeonHack
-		public static GraphicsPath DrawArrow(int x, int y, bool flip)
-		{
-			GraphicsPath GP = new GraphicsPath();
+        //-- Credit: AeonHack
+        public static GraphicsPath DrawArrow(int x, int y, bool flip)
+        {
+            var gp = new GraphicsPath();
 
-			int W = 12;
-			int H = 6;
+            const int w = 12;
+            const int h = 6;
 
-			if (flip)
-			{
-				GP.AddLine(x + 1, y, x + W + 1, y);
-				GP.AddLine(x + W, y, x + H, y + H - 1);
-			}
-			else
-			{
-				GP.AddLine(x, y + H, x + W, y + H);
-				GP.AddLine(x + W, y + H, x + H, y);
-			}
+            if (flip)
+            {
+                gp.AddLine(x + 1, y, x + w + 1, y);
+                gp.AddLine(x + w, y, x + h, y + h - 1);
+            }
+            else
+            {
+                gp.AddLine(x, y + h, x + w, y + h);
+                gp.AddLine(x + w, y + h, x + h, y);
+            }
 
-			GP.CloseFigure();
-			return GP;
-		}
+            gp.CloseFigure();
+            return gp;
+        }
 
-		/// <summary>
-		/// Get the colorscheme of a Control from a parent FormSkin.
-		/// </summary>
-		/// <param name="control">Control</param>
-		/// <returns>Colors</returns>
-		/// <exception cref="System.ArgumentNullException"></exception>
-		public static FlatColors GetColors(Control control)
-		{
-			if (control == null)
-				throw new ArgumentNullException();
+        /// <summary>
+        ///     Get the colorscheme of a Control from a parent FormSkin.
+        /// </summary>
+        /// <param name="control">Control</param>
+        /// <returns>Colors</returns>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        public static FlatColors GetColors(Control control)
+        {
+            if (control == null)
+                throw new ArgumentNullException();
 
-			FlatColors colors = new FlatColors();
+            var colors = new FlatColors();
 
-			while(control != null && (control.GetType() !=  typeof(FormSkin)))
-			{
-				control = control.Parent;
-			}
+            while (control != null && control.GetType() != typeof(FormSkin)) control = control.Parent;
 
-			if(control != null)
-			{
-				FormSkin skin = (FormSkin)control;
-				colors.Flat = skin.FlatColor;
-			}
+            if (control != null)
+            {
+                var skin = (FormSkin) control;
+                colors.Flat = skin.FlatColor;
+            }
 
-			return colors;
-		}
-	}
+            return colors;
+        }
+    }
 }

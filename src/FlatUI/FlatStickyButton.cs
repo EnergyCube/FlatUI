@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualBasic;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -8,200 +7,183 @@ using System.Windows.Forms;
 
 namespace FlatUI
 {
-	public class FlatStickyButton : Control
-	{
-		private int W;
-		private int H;
-		private MouseState State = MouseState.None;
-		private bool _Rounded = false;
+    public sealed class FlatStickyButton : Control
+    {
+        private int _h;
+        private MouseState _state = MouseState.None;
+        private int _w;
 
-		protected override void OnMouseDown(MouseEventArgs e)
-		{
-			base.OnMouseDown(e);
-			State = MouseState.Down;
-			Invalidate();
-		}
+        public FlatStickyButton()
+        {
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw |
+                ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+            DoubleBuffered = true;
+            Size = new Size(106, 32);
+            BackColor = Color.Transparent;
+            Font = new Font("Segoe UI", 12);
+            Cursor = Cursors.Hand;
+        }
 
-		protected override void OnMouseUp(MouseEventArgs e)
-		{
-			base.OnMouseUp(e);
-			State = MouseState.Over;
-			Invalidate();
-		}
+        private Rectangle Rect => new Rectangle(Left, Top, Width, Height);
 
-		protected override void OnMouseEnter(EventArgs e)
-		{
-			base.OnMouseEnter(e);
-			State = MouseState.Over;
-			Invalidate();
-		}
+        [Category("Colors")] public Color BaseColor { get; set; } = Helpers.FlatColor;
 
-		protected override void OnMouseLeave(EventArgs e)
-		{
-			base.OnMouseLeave(e);
-			State = MouseState.None;
-			Invalidate();
-		}
+        [Category("Colors")] public Color TextColor { get; set; } = Color.FromArgb(243, 243, 243);
 
-		private bool[] GetConnectedSides()
-		{
-			bool[] Bool = new bool[4] { false, false, false, false };
+        [Category("Options")] public bool Rounded { get; set; }
 
-			foreach (Control B in Parent.Controls)
-			{
-				if (B is FlatStickyButton)
-				{
-					if (object.ReferenceEquals(B, this) || !Rect.IntersectsWith(Rect))
-						continue;
-					double A = (Math.Atan2(Left - B.Left, Top - B.Top) * 2 / Math.PI);
-					if (A / 1 == A)
-						Bool[(int)A + 1] = true;
-				}
-			}
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            _state = MouseState.Down;
+            Invalidate();
+        }
 
-			return Bool;
-		}
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            _state = MouseState.Over;
+            Invalidate();
+        }
 
-		private Rectangle Rect
-		{
-			get { return new Rectangle(Left, Top, Width, Height); }
-		}
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            _state = MouseState.Over;
+            Invalidate();
+        }
 
-		[Category("Colors")]
-		public Color BaseColor
-		{
-			get { return _BaseColor; }
-			set { _BaseColor = value; }
-		}
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            _state = MouseState.None;
+            Invalidate();
+        }
 
-		[Category("Colors")]
-		public Color TextColor
-		{
-			get { return _TextColor; }
-			set { _TextColor = value; }
-		}
+        private bool[] GetConnectedSides()
+        {
+            var Bool = new[] {false, false, false, false};
 
-		[Category("Options")]
-		public bool Rounded
-		{
-			get { return _Rounded; }
-			set { _Rounded = value; }
-		}
+            foreach (Control b in Parent.Controls)
+            {
+                if (!(b is FlatStickyButton)) continue;
 
-		protected override void OnResize(EventArgs e)
-		{
-			base.OnResize(e);
-			//Height = 32
-		}
+                if (ReferenceEquals(b, this) || !Rect.IntersectsWith(Rect))
+                    continue;
 
-		protected override void OnCreateControl()
-		{
-			base.OnCreateControl();
-			//Size = New Size(112, 32)
-		}
+                var a = Math.Atan2(Left - b.Left, Top - b.Top) * 2 / Math.PI;
 
-		private Color _BaseColor = Helpers.FlatColor;
-		private Color _TextColor = Color.FromArgb(243, 243, 243);
+                if (Math.Abs(a / 1 - a) < 0.1)
+                    Bool[(int) a + 1] = true;
+            }
 
-		public FlatStickyButton()
-		{
-			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
-			DoubleBuffered = true;
-			Size = new Size(106, 32);
-			BackColor = Color.Transparent;
-			Font = new Font("Segoe UI", 12);
-			Cursor = Cursors.Hand;
-		}
+            return Bool;
+        }
 
-		protected override void OnPaint(PaintEventArgs e)
-		{
-			this.UpdateColors();
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            UpdateColors();
 
-			Bitmap B = new Bitmap(Width, Height);
-			Graphics G = Graphics.FromImage(B);
-			W = Width;
-			H = Height;
+            var b = new Bitmap(Width, Height);
+            var g = Graphics.FromImage(b);
+            _w = Width;
+            _h = Height;
 
-			GraphicsPath GP = new GraphicsPath();
+            GraphicsPath gp;
 
-			bool[] GCS = GetConnectedSides();
-			// dynamic RoundedBase = Helpers.RoundRect(0, 0, W, H, ???, !(GCS(2) | GCS(1)), !(GCS(1) | GCS(0)), !(GCS(3) | GCS(0)), !(GCS(3) | GCS(2)));
-			GraphicsPath RoundedBase = Helpers.RoundRect(0, 0, W, H, 0.3, !(GCS[2] || GCS[1]), !(GCS[1] || GCS[0]), !(GCS[3] || GCS[0]), !(GCS[3] || GCS[2]));
-			Rectangle Base = new Rectangle(0, 0, W, H);
+            var gcs = GetConnectedSides();
+            // dynamic RoundedBase = Helpers.RoundRect(0, 0, W, H, ???, !(GCS(2) | GCS(1)), !(GCS(1) | GCS(0)), !(GCS(3) | GCS(0)), !(GCS(3) | GCS(2)));
+            var roundedBase = Helpers.RoundRect(0, 0, _w, _h, 0.3, !(gcs[2] || gcs[1]), !(gcs[1] || gcs[0]),
+                !(gcs[3] || gcs[0]), !(gcs[3] || gcs[2]));
+            var Base = new Rectangle(0, 0, _w, _h);
 
-			var _with17 = G;
-			_with17.SmoothingMode = SmoothingMode.HighQuality;
-			_with17.PixelOffsetMode = PixelOffsetMode.HighQuality;
-			_with17.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-			_with17.Clear(BackColor);
+            var with17 = g;
+            with17.SmoothingMode = SmoothingMode.HighQuality;
+            with17.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            with17.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            with17.Clear(BackColor);
 
-			switch (State) {
-				case MouseState.None:
-					if (Rounded) {
-						//-- Base
-						GP = RoundedBase;
-						_with17.FillPath(new SolidBrush(_BaseColor), GP);
+            switch (_state)
+            {
+                case MouseState.None:
+                    if (Rounded)
+                    {
+                        //-- Base
+                        gp = roundedBase;
+                        with17.FillPath(new SolidBrush(BaseColor), gp);
 
-						//-- Text
-						_with17.DrawString(Text, Font, new SolidBrush(_TextColor), Base, Helpers.CenterSF);
-					} else {
-						//-- Base
-						_with17.FillRectangle(new SolidBrush(_BaseColor), Base);
+                        //-- Text
+                        with17.DrawString(Text, Font, new SolidBrush(TextColor), Base, Helpers.CenterSf);
+                    }
+                    else
+                    {
+                        //-- Base
+                        with17.FillRectangle(new SolidBrush(BaseColor), Base);
 
-						//-- Text
-						_with17.DrawString(Text, Font, new SolidBrush(_TextColor), Base, Helpers.CenterSF);
-					}
-					break;
-				case MouseState.Over:
-					if (Rounded) {
-						//-- Base
-						GP = RoundedBase;
-						_with17.FillPath(new SolidBrush(_BaseColor), GP);
-						_with17.FillPath(new SolidBrush(Color.FromArgb(20, Color.White)), GP);
+                        //-- Text
+                        with17.DrawString(Text, Font, new SolidBrush(TextColor), Base, Helpers.CenterSf);
+                    }
 
-						//-- Text
-						_with17.DrawString(Text, Font, new SolidBrush(_TextColor), Base, Helpers.CenterSF);
-					} else {
-						//-- Base
-						_with17.FillRectangle(new SolidBrush(_BaseColor), Base);
-						_with17.FillRectangle(new SolidBrush(Color.FromArgb(20, Color.White)), Base);
+                    break;
+                case MouseState.Over:
+                    if (Rounded)
+                    {
+                        //-- Base
+                        gp = roundedBase;
+                        with17.FillPath(new SolidBrush(BaseColor), gp);
+                        with17.FillPath(new SolidBrush(Color.FromArgb(20, Color.White)), gp);
 
-						//-- Text
-						_with17.DrawString(Text, Font, new SolidBrush(_TextColor), Base, Helpers.CenterSF);
-					}
-					break;
-				case MouseState.Down:
-					if (Rounded) {
-						//-- Base
-						GP = RoundedBase;
-						_with17.FillPath(new SolidBrush(_BaseColor), GP);
-						_with17.FillPath(new SolidBrush(Color.FromArgb(20, Color.Black)), GP);
+                        //-- Text
+                        with17.DrawString(Text, Font, new SolidBrush(TextColor), Base, Helpers.CenterSf);
+                    }
+                    else
+                    {
+                        //-- Base
+                        with17.FillRectangle(new SolidBrush(BaseColor), Base);
+                        with17.FillRectangle(new SolidBrush(Color.FromArgb(20, Color.White)), Base);
 
-						//-- Text
-						_with17.DrawString(Text, Font, new SolidBrush(_TextColor), Base, Helpers.CenterSF);
-					} else {
-						//-- Base
-						_with17.FillRectangle(new SolidBrush(_BaseColor), Base);
-						_with17.FillRectangle(new SolidBrush(Color.FromArgb(20, Color.Black)), Base);
+                        //-- Text
+                        with17.DrawString(Text, Font, new SolidBrush(TextColor), Base, Helpers.CenterSf);
+                    }
 
-						//-- Text
-						_with17.DrawString(Text, Font, new SolidBrush(_TextColor), Base, Helpers.CenterSF);
-					}
-					break;
-			}
+                    break;
+                case MouseState.Down:
+                    if (Rounded)
+                    {
+                        //-- Base
+                        gp = roundedBase;
+                        with17.FillPath(new SolidBrush(BaseColor), gp);
+                        with17.FillPath(new SolidBrush(Color.FromArgb(20, Color.Black)), gp);
 
-			base.OnPaint(e);
-			G.Dispose();
-			e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-			e.Graphics.DrawImageUnscaled(B, 0, 0);
-			B.Dispose();
-		}
+                        //-- Text
+                        with17.DrawString(Text, Font, new SolidBrush(TextColor), Base, Helpers.CenterSf);
+                    }
+                    else
+                    {
+                        //-- Base
+                        with17.FillRectangle(new SolidBrush(BaseColor), Base);
+                        with17.FillRectangle(new SolidBrush(Color.FromArgb(20, Color.Black)), Base);
 
-		private void UpdateColors()
-		{
-			FlatColors colors = Helpers.GetColors(this);
+                        //-- Text
+                        with17.DrawString(Text, Font, new SolidBrush(TextColor), Base, Helpers.CenterSf);
+                    }
 
-			_BaseColor = colors.Flat;
-		}
-	}
+                    break;
+            }
+
+            base.OnPaint(e);
+
+            g.Dispose();
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.DrawImageUnscaled(b, 0, 0);
+            b.Dispose();
+        }
+
+        private void UpdateColors()
+        {
+            var colors = Helpers.GetColors(this);
+            BaseColor = colors.Flat;
+        }
+    }
 }

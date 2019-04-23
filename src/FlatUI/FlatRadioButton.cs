@@ -7,202 +7,189 @@ using System.Windows.Forms;
 
 namespace FlatUI
 {
-	[DefaultEvent("CheckedChanged")]
-	public class FlatRadioButton : Control
-	{
-		private MouseState State = MouseState.None;
-		private int W;
-		private int H;
-		private _Options O;
+    [DefaultEvent("CheckedChanged")]
+    public sealed class FlatRadioButton : Control
+    {
+        public delegate void CheckedChangedEventHandler(object sender);
 
-		private bool _Checked;
-		public bool Checked
-		{
-			get { return _Checked; }
-			set
-			{
-				_Checked = value;
-				InvalidateControls();
-				if (CheckedChanged != null)
-				{
-					CheckedChanged(this);
-				}
-				Invalidate();
-			}
-		}
+        [Flags]
+        public enum StyleOptions
+        {
+            Style1,
+            Style2
+        }
 
-		public event CheckedChangedEventHandler CheckedChanged;
-		public delegate void CheckedChangedEventHandler(object sender);
+        private readonly Color _baseColor = Color.FromArgb(45, 47, 49);
+        private readonly Color _textColor = Color.FromArgb(243, 243, 243);
+        private Color _borderColor = Helpers.FlatColor;
 
-		protected override void OnClick(EventArgs e)
-		{
-			if (!_Checked)
-				Checked = true;
-			base.OnClick(e);
-		}
+        private bool _checked;
+        private int _h;
+        private MouseState _state = MouseState.None;
+        private int _w;
 
-		private void InvalidateControls()
-		{
-			if (!IsHandleCreated || !_Checked)
-				return;
-			foreach (Control C in Parent.Controls)
-			{
-				if (!object.ReferenceEquals(C, this) && C is FlatRadioButton)
-				{
-					((FlatRadioButton)C).Checked = false;
-					Invalidate();
-				}
-			}
-		}
+        public FlatRadioButton()
+        {
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw |
+                ControlStyles.OptimizedDoubleBuffer, true);
+            DoubleBuffered = true;
+            Cursor = Cursors.Hand;
+            Size = new Size(100, 22);
+            BackColor = Color.FromArgb(60, 70, 73);
+            Font = new Font("Segoe UI", 10);
+        }
 
-		protected override void OnCreateControl()
-		{
-			base.OnCreateControl();
-			InvalidateControls();
-		}
+        public bool Checked
+        {
+            get => _checked;
+            set
+            {
+                _checked = value;
+                InvalidateControls();
+                CheckedChanged?.Invoke(this);
+                Invalidate();
+            }
+        }
 
-		[Flags()]
-		public enum _Options
-		{
-			Style1,
-			Style2
-		}
+        [Category("Options")] public StyleOptions Options { get; set; }
 
-		[Category("Options")]
-		public _Options Options
-		{
-			get { return O; }
-			set { O = value; }
-		}
+        public event CheckedChangedEventHandler CheckedChanged;
 
-		protected override void OnResize(EventArgs e)
-		{
-			base.OnResize(e);
-			Height = 22;
-		}
+        protected override void OnClick(EventArgs e)
+        {
+            if (!_checked)
+                Checked = true;
+            base.OnClick(e);
+        }
 
-		protected override void OnMouseDown(MouseEventArgs e)
-		{
-			base.OnMouseDown(e);
-			State = MouseState.Down;
-			Invalidate();
-		}
+        private void InvalidateControls()
+        {
+            if (!IsHandleCreated || !_checked)
+                return;
+            foreach (Control c in Parent.Controls)
+            {
+                if (!ReferenceEquals(c, this) && c is FlatRadioButton button)
+                {
+                    button.Checked = false;
+                    Invalidate();
+                }
+            }
+        }
 
-		protected override void OnMouseUp(MouseEventArgs e)
-		{
-			base.OnMouseUp(e);
-			State = MouseState.Over;
-			Invalidate();
-		}
+        protected override void OnCreateControl()
+        {
+            base.OnCreateControl();
+            InvalidateControls();
+        }
 
-		protected override void OnMouseEnter(EventArgs e)
-		{
-			base.OnMouseEnter(e);
-			State = MouseState.Over;
-			Invalidate();
-		}
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            Height = 22;
+        }
 
-		protected override void OnMouseLeave(EventArgs e)
-		{
-			base.OnMouseLeave(e);
-			State = MouseState.None;
-			Invalidate();
-		}
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            _state = MouseState.Down;
+            Invalidate();
+        }
 
-		private Color _BaseColor = Color.FromArgb(45, 47, 49);
-		private Color _BorderColor = Helpers.FlatColor;
-		private Color _TextColor = Color.FromArgb(243, 243, 243);
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            _state = MouseState.Over;
+            Invalidate();
+        }
 
-		public FlatRadioButton()
-		{
-			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer, true);
-			DoubleBuffered = true;
-			Cursor = Cursors.Hand;
-			Size = new Size(100, 22);
-			BackColor = Color.FromArgb(60, 70, 73);
-			Font = new Font("Segoe UI", 10);
-		}
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            _state = MouseState.Over;
+            Invalidate();
+        }
 
-		protected override void OnPaint(PaintEventArgs e)
-		{
-			this.UpdateColors();
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            _state = MouseState.None;
+            Invalidate();
+        }
 
-			Bitmap B = new Bitmap(Width, Height);
-			Graphics G = Graphics.FromImage(B);
-			W = Width - 1;
-			H = Height - 1;
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            UpdateColors();
 
-			Rectangle Base = new Rectangle(0, 2, Height - 5, Height - 5);
-			Rectangle Dot = new Rectangle(4, 6, H - 12, H - 12);
+            var b = new Bitmap(Width, Height);
+            var g = Graphics.FromImage(b);
+            _w = Width - 1;
+            _h = Height - 1;
 
-			var _with10 = G;
-			_with10.SmoothingMode = SmoothingMode.HighQuality;
-			_with10.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-			_with10.Clear(BackColor);
+            var Base = new Rectangle(0, 2, Height - 5, Height - 5);
+            var dot = new Rectangle(4, 6, _h - 12, _h - 12);
 
-			switch (O)
-			{
-				case _Options.Style1:
-					//-- Base
-					_with10.FillEllipse(new SolidBrush(_BaseColor), Base);
+            var with10 = g;
+            with10.SmoothingMode = SmoothingMode.HighQuality;
+            with10.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            with10.Clear(BackColor);
 
-					switch (State)
-					{
-						case MouseState.Over:
-							_with10.DrawEllipse(new Pen(_BorderColor), Base);
-							break;
-						case MouseState.Down:
-							_with10.DrawEllipse(new Pen(_BorderColor), Base);
-							break;
-					}
+            switch (Options)
+            {
+                case StyleOptions.Style1:
+                    //-- Base
+                    with10.FillEllipse(new SolidBrush(_baseColor), Base);
 
-					//-- If Checked 
-					if (Checked)
-					{
-						_with10.FillEllipse(new SolidBrush(_BorderColor), Dot);
-					}
-					break;
-				case _Options.Style2:
-					//-- Base
-					_with10.FillEllipse(new SolidBrush(_BaseColor), Base);
+                    switch (_state)
+                    {
+                        case MouseState.Over:
+                            with10.DrawEllipse(new Pen(_borderColor), Base);
+                            break;
+                        case MouseState.Down:
+                            with10.DrawEllipse(new Pen(_borderColor), Base);
+                            break;
+                    }
 
-					switch (State)
-					{
-						case MouseState.Over:
-							//-- Base
-							_with10.DrawEllipse(new Pen(_BorderColor), Base);
-							_with10.FillEllipse(new SolidBrush(Color.FromArgb(118, 213, 170)), Base);
-							break;
-						case MouseState.Down:
-							//-- Base
-							_with10.DrawEllipse(new Pen(_BorderColor), Base);
-							_with10.FillEllipse(new SolidBrush(Color.FromArgb(118, 213, 170)), Base);
-							break;
-					}
+                    //-- If Checked 
+                    if (Checked) with10.FillEllipse(new SolidBrush(_borderColor), dot);
+                    break;
+                case StyleOptions.Style2:
+                    //-- Base
+                    with10.FillEllipse(new SolidBrush(_baseColor), Base);
 
-					//-- If Checked
-					if (Checked)
-					{
-						//-- Base
-						_with10.FillEllipse(new SolidBrush(_BorderColor), Dot);
-					}
-					break;
-			}
+                    switch (_state)
+                    {
+                        case MouseState.Over:
+                            //-- Base
+                            with10.DrawEllipse(new Pen(_borderColor), Base);
+                            with10.FillEllipse(new SolidBrush(Color.FromArgb(118, 213, 170)), Base);
+                            break;
+                        case MouseState.Down:
+                            //-- Base
+                            with10.DrawEllipse(new Pen(_borderColor), Base);
+                            with10.FillEllipse(new SolidBrush(Color.FromArgb(118, 213, 170)), Base);
+                            break;
+                    }
 
-			_with10.DrawString(Text, Font, new SolidBrush(_TextColor), new Rectangle(20, 2, W, H), Helpers.NearSF);
+                    //-- If Checked
+                    if (Checked) with10.FillEllipse(new SolidBrush(_borderColor), dot);
+                    break;
+            }
 
-			base.OnPaint(e);
-			G.Dispose();
-			e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-			e.Graphics.DrawImageUnscaled(B, 0, 0);
-			B.Dispose();
-		}
+            with10.DrawString(Text, Font, new SolidBrush(_textColor), new Rectangle(20, 2, _w, _h), Helpers.NearSf);
 
-		private void UpdateColors()
-		{
-			FlatColors colors = Helpers.GetColors(this);
+            base.OnPaint(e);
+            g.Dispose();
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.DrawImageUnscaled(b, 0, 0);
+            b.Dispose();
+        }
 
-			_BorderColor = colors.Flat;
-		}
-	}
+        private void UpdateColors()
+        {
+            var colors = Helpers.GetColors(this);
+
+            _borderColor = colors.Flat;
+        }
+    }
 }

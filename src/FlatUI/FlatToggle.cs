@@ -7,244 +7,227 @@ using System.Windows.Forms;
 
 namespace FlatUI
 {
-	[DefaultEvent("CheckedChanged")]
-	public class FlatToggle : Control
-	{
-		private int W;
-		private int H;
-		private _Options O;
-		private bool _Checked = false;
-		private MouseState State = MouseState.None;
+    [DefaultEvent("CheckedChanged")]
+    public sealed class FlatToggle : Control
+    {
+        public delegate void CheckedChangedEventHandler(object sender);
 
-		public event CheckedChangedEventHandler CheckedChanged;
-		public delegate void CheckedChangedEventHandler(object sender);
+        [Flags]
+        public enum StyleOptions
+        {
+            Style1,
+            Style2,
+            Style3
+        }
 
-		[Flags()]
-		public enum _Options
-		{
-			Style1,
-			Style2,
-			Style3,
-			Style4,
-			//-- TODO: New Style
-			Style5
-			//-- TODO: New Style
-		}
+        private readonly Color _baseColorRed = Color.FromArgb(220, 85, 96);
+        private readonly Color _bgColor = Color.FromArgb(84, 85, 86);
+        private readonly Color _textColor = Color.FromArgb(243, 243, 243);
+        private readonly Color _toggleColor = Color.FromArgb(45, 47, 49);
 
-		[Category("Options")]
-		public _Options Options
-		{
-			get { return O; }
-			set { O = value; }
-		}
+        private Color _baseColor = Helpers.FlatColor;
+        private int _h;
+        private int _w;
+        public MouseState State = MouseState.None;
 
-		[Category("Options")]
-		public bool Checked
-		{
-			get { return _Checked; }
-			set { _Checked = value; }
-		}
+        public FlatToggle()
+        {
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw |
+                ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+            DoubleBuffered = true;
+            BackColor = Color.Transparent;
+            Size = new Size(44, Height + 1);
+            Cursor = Cursors.Hand;
+            Font = new Font("Segoe UI", 10);
+            Size = new Size(76, 33);
+        }
 
-		protected override void OnTextChanged(EventArgs e)
-		{
-			base.OnTextChanged(e);
-			Invalidate();
-		}
+        [Category("Options")] public StyleOptions Options { get; set; }
 
-		protected override void OnResize(EventArgs e)
-		{
-			base.OnResize(e);
-			Width = 76;
-			Height = 33;
-		}
+        [Category("Options")] public bool Checked { get; set; }
 
-		protected override void OnMouseEnter(System.EventArgs e)
-		{
-			base.OnMouseEnter(e);
-			State = MouseState.Over;
-			Invalidate();
-		}
+        public event CheckedChangedEventHandler CheckedChanged;
 
-		protected override void OnMouseDown(System.Windows.Forms.MouseEventArgs e)
-		{
-			base.OnMouseDown(e);
-			State = MouseState.Down;
-			Invalidate();
-		}
+        protected override void OnTextChanged(EventArgs e)
+        {
+            base.OnTextChanged(e);
+            Invalidate();
+        }
 
-		protected override void OnMouseLeave(System.EventArgs e)
-		{
-			base.OnMouseLeave(e);
-			State = MouseState.None;
-			Invalidate();
-		}
-		protected override void OnMouseUp(System.Windows.Forms.MouseEventArgs e)
-		{
-			base.OnMouseUp(e);
-			State = MouseState.Over;
-			Invalidate();
-		}
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            Width = 76;
+            Height = 33;
+        }
 
-		protected override void OnClick(EventArgs e)
-		{
-			base.OnClick(e);
-			_Checked = !_Checked;
-			if (CheckedChanged != null)
-			{
-				CheckedChanged(this);
-			}
-		}
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            State = MouseState.Over;
+            Invalidate();
+        }
 
-		private Color BaseColor = Helpers.FlatColor;
-		private Color BaseColorRed = Color.FromArgb(220, 85, 96);
-		private Color BGColor = Color.FromArgb(84, 85, 86);
-		private Color ToggleColor = Color.FromArgb(45, 47, 49);
-		private Color TextColor = Color.FromArgb(243, 243, 243);
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            State = MouseState.Down;
+            Invalidate();
+        }
 
-		public FlatToggle()
-		{
-			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
-			DoubleBuffered = true;
-			BackColor = Color.Transparent;
-			Size = new Size(44, Height + 1);
-			Cursor = Cursors.Hand;
-			Font = new Font("Segoe UI", 10);
-			Size = new Size(76, 33);
-		}
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            State = MouseState.None;
+            Invalidate();
+        }
 
-		protected override void OnPaint(PaintEventArgs e)
-		{
-			this.UpdateColors();
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            State = MouseState.Over;
+            Invalidate();
+        }
 
-			Bitmap B = new Bitmap(Width, Height);
-			Graphics G = Graphics.FromImage(B);
-			W = Width - 1;
-			H = Height - 1;
+        protected override void OnClick(EventArgs e)
+        {
+            base.OnClick(e);
+            Checked = !Checked;
+            CheckedChanged?.Invoke(this);
+        }
 
-			GraphicsPath GP = new GraphicsPath();
-			GraphicsPath GP2 = new GraphicsPath();
-			Rectangle Base = new Rectangle(0, 0, W, H);
-			Rectangle Toggle = new Rectangle(Convert.ToInt32(W / 2), 0, 38, H);
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            UpdateColors();
 
-			var _with9 = G;
-			_with9.SmoothingMode = SmoothingMode.HighQuality;
-			_with9.PixelOffsetMode = PixelOffsetMode.HighQuality;
-			_with9.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-			_with9.Clear(BackColor);
+            var b = new Bitmap(Width, Height);
+            var g = Graphics.FromImage(b);
+            _w = Width - 1;
+            _h = Height - 1;
 
-			switch (O)
-			{
-				case _Options.Style1:
-					//-- Style 1
-					//-- Base
-					GP = Helpers.RoundRec(Base, 6);
-					GP2 = Helpers.RoundRec(Toggle, 6);
-					_with9.FillPath(new SolidBrush(BGColor), GP);
-					_with9.FillPath(new SolidBrush(ToggleColor), GP2);
+            GraphicsPath gp;
+            var gp2 = new GraphicsPath();
+            var Base = new Rectangle(0, 0, _w, _h);
+            var toggle = new Rectangle(Convert.ToInt32(_w / 2), 0, 38, _h);
 
-					//-- Text
-					_with9.DrawString("OFF", Font, new SolidBrush(BGColor), new Rectangle(19, 1, W, H), Helpers.CenterSF);
+            var with9 = g;
+            with9.SmoothingMode = SmoothingMode.HighQuality;
+            with9.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            with9.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            with9.Clear(BackColor);
 
-					if (Checked)
-					{
-						//-- Base
-						GP = Helpers.RoundRec(Base, 6);
-						GP2 = Helpers.RoundRec(new Rectangle(Convert.ToInt32(W / 2), 0, 38, H), 6);
-						_with9.FillPath(new SolidBrush(ToggleColor), GP);
-						_with9.FillPath(new SolidBrush(BaseColor), GP2);
+            switch (Options)
+            {
+                case StyleOptions.Style1:
+                    //-- Style 1
+                    //-- Base
+                    gp = Helpers.RoundRec(Base, 6);
+                    gp2 = Helpers.RoundRec(toggle, 6);
+                    with9.FillPath(new SolidBrush(_bgColor), gp);
+                    with9.FillPath(new SolidBrush(_toggleColor), gp2);
 
-						//-- Text
-						_with9.DrawString("ON", Font, new SolidBrush(BaseColor), new Rectangle(8, 7, W, H), Helpers.NearSF);
-					}
-					break;
-				case _Options.Style2:
-					//-- Style 2
-					//-- Base
-					GP = Helpers.RoundRec(Base, 6);
-					Toggle = new Rectangle(4, 4, 36, H - 8);
-					GP2 = Helpers.RoundRec(Toggle, 4);
-					_with9.FillPath(new SolidBrush(BaseColorRed), GP);
-					_with9.FillPath(new SolidBrush(ToggleColor), GP2);
+                    //-- Text
+                    with9.DrawString("OFF", Font, new SolidBrush(_bgColor), new Rectangle(19, 1, _w, _h),
+                        Helpers.CenterSf);
 
-					//-- Lines
-					_with9.DrawLine(new Pen(BGColor), 18, 20, 18, 12);
-					_with9.DrawLine(new Pen(BGColor), 22, 20, 22, 12);
-					_with9.DrawLine(new Pen(BGColor), 26, 20, 26, 12);
+                    if (Checked)
+                    {
+                        //-- Base
+                        gp = Helpers.RoundRec(Base, 6);
+                        gp2 = Helpers.RoundRec(new Rectangle(Convert.ToInt32(_w / 2), 0, 38, _h), 6);
+                        with9.FillPath(new SolidBrush(_toggleColor), gp);
+                        with9.FillPath(new SolidBrush(_baseColor), gp2);
 
-					//-- Text
-					_with9.DrawString("r", new Font("Marlett", 8), new SolidBrush(TextColor), new Rectangle(19, 2, Width, Height), Helpers.CenterSF);
+                        //-- Text
+                        with9.DrawString("ON", Font, new SolidBrush(_baseColor), new Rectangle(8, 7, _w, _h),
+                            Helpers.NearSf);
+                    }
 
-					if (Checked)
-					{
-						GP = Helpers.RoundRec(Base, 6);
-						Toggle = new Rectangle(Convert.ToInt32(W / 2) - 2, 4, 36, H - 8);
-						GP2 = Helpers.RoundRec(Toggle, 4);
-						_with9.FillPath(new SolidBrush(BaseColor), GP);
-						_with9.FillPath(new SolidBrush(ToggleColor), GP2);
+                    break;
+                case StyleOptions.Style2:
+                    //-- Style 2
+                    //-- Base
+                    gp = Helpers.RoundRec(Base, 6);
+                    toggle = new Rectangle(4, 4, 36, _h - 8);
+                    gp2 = Helpers.RoundRec(toggle, 4);
+                    with9.FillPath(new SolidBrush(_baseColorRed), gp);
+                    with9.FillPath(new SolidBrush(_toggleColor), gp2);
 
-						//-- Lines
-						_with9.DrawLine(new Pen(BGColor), Convert.ToInt32(W / 2) + 12, 20, Convert.ToInt32(W / 2) + 12, 12);
-						_with9.DrawLine(new Pen(BGColor), Convert.ToInt32(W / 2) + 16, 20, Convert.ToInt32(W / 2) + 16, 12);
-						_with9.DrawLine(new Pen(BGColor), Convert.ToInt32(W / 2) + 20, 20, Convert.ToInt32(W / 2) + 20, 12);
+                    //-- Lines
+                    with9.DrawLine(new Pen(_bgColor), 18, 20, 18, 12);
+                    with9.DrawLine(new Pen(_bgColor), 22, 20, 22, 12);
+                    with9.DrawLine(new Pen(_bgColor), 26, 20, 26, 12);
 
-						//-- Text
-						_with9.DrawString("ü", new Font("Wingdings", 14), new SolidBrush(TextColor), new Rectangle(8, 7, Width, Height), Helpers.NearSF);
-					}
-					break;
-				case _Options.Style3:
-					//-- Style 3
-					//-- Base
-					GP = Helpers.RoundRec(Base, 16);
-					Toggle = new Rectangle(W - 28, 4, 22, H - 8);
-					GP2.AddEllipse(Toggle);
-					_with9.FillPath(new SolidBrush(ToggleColor), GP);
-					_with9.FillPath(new SolidBrush(BaseColorRed), GP2);
+                    //-- Text
+                    with9.DrawString("r", new Font("Marlett", 8), new SolidBrush(_textColor),
+                        new Rectangle(19, 2, Width, Height), Helpers.CenterSf);
 
-					//-- Text
-					_with9.DrawString("OFF", Font, new SolidBrush(BaseColorRed), new Rectangle(-12, 2, W, H), Helpers.CenterSF);
+                    if (Checked)
+                    {
+                        gp = Helpers.RoundRec(Base, 6);
+                        toggle = new Rectangle(Convert.ToInt32(_w / 2) - 2, 4, 36, _h - 8);
+                        gp2 = Helpers.RoundRec(toggle, 4);
+                        with9.FillPath(new SolidBrush(_baseColor), gp);
+                        with9.FillPath(new SolidBrush(_toggleColor), gp2);
 
-					if (Checked)
-					{
-						//-- Base
-						GP = Helpers.RoundRec(Base, 16);
-						Toggle = new Rectangle(6, 4, 22, H - 8);
-						GP2.Reset();
-						GP2.AddEllipse(Toggle);
-						_with9.FillPath(new SolidBrush(ToggleColor), GP);
-						_with9.FillPath(new SolidBrush(BaseColor), GP2);
+                        //-- Lines
+                        with9.DrawLine(new Pen(_bgColor), Convert.ToInt32(_w / 2) + 12, 20,
+                            Convert.ToInt32(_w / 2) + 12, 12);
+                        with9.DrawLine(new Pen(_bgColor), Convert.ToInt32(_w / 2) + 16, 20,
+                            Convert.ToInt32(_w / 2) + 16, 12);
+                        with9.DrawLine(new Pen(_bgColor), Convert.ToInt32(_w / 2) + 20, 20,
+                            Convert.ToInt32(_w / 2) + 20, 12);
 
-						//-- Text
-						_with9.DrawString("ON", Font, new SolidBrush(BaseColor), new Rectangle(12, 2, W, H), Helpers.CenterSF);
-					}
-					break;
-				case _Options.Style4:
-					//-- TODO: New Styles
-					if (Checked)
-					{
-						//--
-					}
-					break;
-				case _Options.Style5:
-					//-- TODO: New Styles
-					if (Checked)
-					{
-						//--
-					}
-					break;
-			}
+                        //-- Text
+                        with9.DrawString("ü", new Font("Wingdings", 14), new SolidBrush(_textColor),
+                            new Rectangle(8, 7, Width, Height), Helpers.NearSf);
+                    }
 
-			base.OnPaint(e);
-			G.Dispose();
-			e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-			e.Graphics.DrawImageUnscaled(B, 0, 0);
-			B.Dispose();
-		}
+                    break;
+                case StyleOptions.Style3:
+                    //-- Style 3
+                    //-- Base
+                    gp = Helpers.RoundRec(Base, 16);
+                    toggle = new Rectangle(_w - 28, 4, 22, _h - 8);
+                    gp2.AddEllipse(toggle);
+                    with9.FillPath(new SolidBrush(_toggleColor), gp);
+                    with9.FillPath(new SolidBrush(_baseColorRed), gp2);
 
-		private void UpdateColors()
-		{
-			FlatColors colors = Helpers.GetColors(this);
+                    //-- Text
+                    with9.DrawString("OFF", Font, new SolidBrush(_baseColorRed), new Rectangle(-12, 2, _w, _h),
+                        Helpers.CenterSf);
 
-			BaseColor = colors.Flat;
-		}
-	}
+                    if (Checked)
+                    {
+                        //-- Base
+                        gp = Helpers.RoundRec(Base, 16);
+                        toggle = new Rectangle(6, 4, 22, _h - 8);
+                        gp2.Reset();
+                        gp2.AddEllipse(toggle);
+                        with9.FillPath(new SolidBrush(_toggleColor), gp);
+                        with9.FillPath(new SolidBrush(_baseColor), gp2);
+
+                        //-- Text
+                        with9.DrawString("ON", Font, new SolidBrush(_baseColor), new Rectangle(12, 2, _w, _h),
+                            Helpers.CenterSf);
+                    }
+
+                    break;
+            }
+
+            base.OnPaint(e);
+            g.Dispose();
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.DrawImageUnscaled(b, 0, 0);
+            b.Dispose();
+        }
+
+        private void UpdateColors()
+        {
+            var colors = Helpers.GetColors(this);
+
+            _baseColor = colors.Flat;
+        }
+    }
 }

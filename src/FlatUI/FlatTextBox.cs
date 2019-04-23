@@ -7,305 +7,258 @@ using System.Windows.Forms;
 
 namespace FlatUI
 {
-	[DefaultEvent("TextChanged")]
-	public class FlatTextBox : Control
-	{
-		private int W;
-		private int H;
-		private MouseState State = MouseState.None;
-		private System.Windows.Forms.TextBox TB;
+    [DefaultEvent("TextChanged")]
+    public sealed class FlatTextBox : Control
+    {
+        private readonly Color _baseColor = Color.FromArgb(45, 47, 49);
+        private readonly TextBox _tb;
+        private int _h;
 
-		private HorizontalAlignment _TextAlign = HorizontalAlignment.Left;
-		[Category("Options")]
-		public HorizontalAlignment TextAlign
-		{
-			get { return _TextAlign; }
-			set
-			{
-				_TextAlign = value;
-				if (TB != null)
-				{
-					TB.TextAlign = value;
-				}
-			}
-		}
+        private int _maxLength = 32767;
 
-		private int _MaxLength = 32767;
-		[Category("Options")]
-		public int MaxLength
-		{
-			get { return _MaxLength; }
-			set
-			{
-				_MaxLength = value;
-				if (TB != null)
-				{
-					TB.MaxLength = value;
-				}
-			}
-		}
+        private bool _multiline;
 
-		private bool _ReadOnly;
-		[Category("Options")]
-		public bool ReadOnly
-		{
-			get { return _ReadOnly; }
-			set
-			{
-				_ReadOnly = value;
-				if (TB != null)
-				{
-					TB.ReadOnly = value;
-				}
-			}
-		}
+        private bool _readOnly;
 
-		private bool _UseSystemPasswordChar;
-		[Category("Options")]
-		public bool UseSystemPasswordChar
-		{
-			get { return _UseSystemPasswordChar; }
-			set
-			{
-				_UseSystemPasswordChar = value;
-				if (TB != null)
-				{
-					TB.UseSystemPasswordChar = value;
-				}
-			}
-		}
+        private HorizontalAlignment _textAlign = HorizontalAlignment.Left;
 
-		private bool _Multiline;
-		[Category("Options")]
-		public bool Multiline
-		{
-			get { return _Multiline; }
-			set
-			{
-				_Multiline = value;
-				if (TB != null)
-				{
-					TB.Multiline = value;
+        private bool _useSystemPasswordChar;
+        private int _w;
+        public MouseState State = MouseState.None;
 
-					if (value)
-					{
-						TB.Height = Height - 11;
-					}
-					else
-					{
-						Height = TB.Height + 11;
-					}
+        public FlatTextBox()
+        {
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw |
+                ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
 
-				}
-			}
-		}
+            DoubleBuffered = true;
+            BackColor = Color.Transparent;
 
-		private bool _FocusOnHover = false;
-		[Category("Options")]
-		public bool FocusOnHover
-		{
-			get { return _FocusOnHover; }
-			set { _FocusOnHover = value; }
-		}
+            _tb = new TextBox
+            {
+                Font = new Font("Segoe UI", 10),
+                Text = Text,
+                BackColor = _baseColor,
+                ForeColor = TextColor,
+                MaxLength = _maxLength,
+                Multiline = _multiline,
+                ReadOnly = _readOnly,
+                UseSystemPasswordChar = _useSystemPasswordChar,
+                BorderStyle = BorderStyle.None,
+                Location = new Point(5, 5),
+                Width = Width - 10,
+                Cursor = Cursors.IBeam
+            };
 
-		[Category("Options")]
-		public override string Text
-		{
-			get { return base.Text; }
-			set
-			{
-				base.Text = value;
-				if (TB != null)
-				{
-					TB.Text = value;
-				}
-			}
-		}
 
-		[Category("Options")]
-		public override Font Font
-		{
-			get { return base.Font; }
-			set
-			{
-				base.Font = value;
-				if (TB != null)
-				{
-					TB.Font = value;
-					TB.Location = new Point(3, 5);
-					TB.Width = Width - 6;
+            if (_multiline)
+                _tb.Height = Height - 11;
+            else
+                Height = _tb.Height + 11;
 
-					if (!_Multiline)
-					{
-						Height = TB.Height + 11;
-					}
-				}
-			}
-		}
+            _tb.TextChanged += OnBaseTextChanged;
+            _tb.KeyDown += OnBaseKeyDown;
+        }
 
-		protected override void OnCreateControl()
-		{
-			base.OnCreateControl();
-			if (!Controls.Contains(TB))
-			{
-				Controls.Add(TB);
-			}
-		}
+        [Category("Options")]
+        public HorizontalAlignment TextAlign
+        {
+            get => _textAlign;
+            set
+            {
+                _textAlign = value;
+                if (_tb != null) _tb.TextAlign = value;
+            }
+        }
 
-		private void OnBaseTextChanged(object s, EventArgs e)
-		{
-			Text = TB.Text;
-		}
+        [Category("Options")]
+        public int MaxLength
+        {
+            get => _maxLength;
+            set
+            {
+                _maxLength = value;
+                if (_tb != null) _tb.MaxLength = value;
+            }
+        }
 
-		private void OnBaseKeyDown(object s, KeyEventArgs e)
-		{
-			if (e.Control && e.KeyCode == Keys.A)
-			{
-				TB.SelectAll();
-				e.SuppressKeyPress = true;
-			}
-			if (e.Control && e.KeyCode == Keys.C)
-			{
-				TB.Copy();
-				e.SuppressKeyPress = true;
-			}
-		}
+        [Category("Options")]
+        public bool ReadOnly
+        {
+            get => _readOnly;
+            set
+            {
+                _readOnly = value;
+                if (_tb != null) _tb.ReadOnly = value;
+            }
+        }
 
-		protected override void OnResize(EventArgs e)
-		{
-			TB.Location = new Point(5, 5);
-			TB.Width = Width - 10;
+        [Category("Options")]
+        public bool UseSystemPasswordChar
+        {
+            get => _useSystemPasswordChar;
+            set
+            {
+                _useSystemPasswordChar = value;
+                if (_tb != null) _tb.UseSystemPasswordChar = value;
+            }
+        }
 
-			if (_Multiline)
-			{
-				TB.Height = Height - 11;
-			}
-			else
-			{
-				Height = TB.Height + 11;
-			}
+        [Category("Options")]
+        public bool Multiline
+        {
+            get => _multiline;
+            set
+            {
+                _multiline = value;
+                if (_tb != null)
+                {
+                    _tb.Multiline = value;
 
-			base.OnResize(e);
-		}
+                    if (value)
+                        _tb.Height = Height - 11;
+                    else
+                        Height = _tb.Height + 11;
+                }
+            }
+        }
 
-		[Category("Colors")]
-		public Color TextColor
-		{
-			get { return _TextColor; }
-			set { _TextColor = value; }
-		}
+        [Category("Options")] public bool FocusOnHover { get; set; }
 
-		public override Color ForeColor
-		{
-			get { return _TextColor; }
-			set { _TextColor = value; }
-		}
+        [Category("Options")]
+        public override string Text
+        {
+            get => base.Text;
+            set
+            {
+                base.Text = value;
+                if (_tb != null) _tb.Text = value;
+            }
+        }
 
-		protected override void OnMouseDown(MouseEventArgs e)
-		{
-			base.OnMouseDown(e);
-			State = MouseState.Down;
-			Invalidate();
-		}
+        [Category("Options")]
+        public override Font Font
+        {
+            get => base.Font;
+            set
+            {
+                base.Font = value;
+                if (_tb != null)
+                {
+                    _tb.Font = value;
+                    _tb.Location = new Point(3, 5);
+                    _tb.Width = Width - 6;
 
-		protected override void OnMouseUp(MouseEventArgs e)
-		{
-			base.OnMouseUp(e);
-			State = MouseState.Over;
-			TB.Focus();
-			Invalidate();
-		}
+                    if (!_multiline) Height = _tb.Height + 11;
+                }
+            }
+        }
 
-		protected override void OnMouseEnter(EventArgs e)
-		{
-			base.OnMouseEnter(e);
-			State = MouseState.Over;
-			if(FocusOnHover) TB.Focus();
-			Invalidate();
-		}
+        [Category("Colors")] public Color TextColor { get; set; } = Color.FromArgb(192, 192, 192);
 
-		protected override void OnMouseLeave(EventArgs e)
-		{
-			base.OnMouseLeave(e);
-			State = MouseState.None;
-			Invalidate();
-		}
+        public override Color ForeColor
+        {
+            get => TextColor;
+            set => TextColor = value;
+        }
 
-		private Color _BaseColor = Color.FromArgb(45, 47, 49);
-		private Color _TextColor = Color.FromArgb(192, 192, 192);
-		private Color _BorderColor = Helpers.FlatColor;
+        protected override void OnCreateControl()
+        {
+            base.OnCreateControl();
+            if (!Controls.Contains(_tb)) Controls.Add(_tb);
+        }
 
-		public FlatTextBox()
-		{
-			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
-			DoubleBuffered = true;
+        private void OnBaseTextChanged(object s, EventArgs e)
+        {
+            Text = _tb.Text;
+        }
 
-			BackColor = Color.Transparent;
+        private void OnBaseKeyDown(object s, KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.A)
+            {
+                _tb.SelectAll();
+                e.SuppressKeyPress = true;
+            }
 
-			TB = new System.Windows.Forms.TextBox();
-			TB.Font = new Font("Segoe UI", 10);
-			TB.Text = Text;
-			TB.BackColor = _BaseColor;
-			TB.ForeColor = _TextColor;
-			TB.MaxLength = _MaxLength;
-			TB.Multiline = _Multiline;
-			TB.ReadOnly = _ReadOnly;
-			TB.UseSystemPasswordChar = _UseSystemPasswordChar;
-			TB.BorderStyle = BorderStyle.None;
-			TB.Location = new Point(5, 5);
-			TB.Width = Width - 10;
+            if (e.Control && e.KeyCode == Keys.C)
+            {
+                _tb.Copy();
+                e.SuppressKeyPress = true;
+            }
+        }
 
-			TB.Cursor = Cursors.IBeam;
+        protected override void OnResize(EventArgs e)
+        {
+            _tb.Location = new Point(5, 5);
+            _tb.Width = Width - 10;
 
-			if (_Multiline)
-			{
-				TB.Height = Height - 11;
-			}
-			else
-			{
-				Height = TB.Height + 11;
-			}
+            if (_multiline)
+                _tb.Height = Height - 11;
+            else
+                Height = _tb.Height + 11;
 
-			TB.TextChanged += OnBaseTextChanged;
-			TB.KeyDown += OnBaseKeyDown;
-		}
+            base.OnResize(e);
+        }
 
-		protected override void OnPaint(PaintEventArgs e)
-		{
-			this.UpdateColors();
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            State = MouseState.Down;
+            Invalidate();
+        }
 
-			Bitmap B = new Bitmap(Width, Height);
-			Graphics G = Graphics.FromImage(B);
-			W = Width - 1;
-			H = Height - 1;
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            State = MouseState.Over;
+            _tb.Focus();
+            Invalidate();
+        }
 
-			Rectangle Base = new Rectangle(0, 0, W, H);
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            State = MouseState.Over;
+            if (FocusOnHover) _tb.Focus();
+            Invalidate();
+        }
 
-			var _with12 = G;
-			_with12.SmoothingMode = SmoothingMode.HighQuality;
-			_with12.PixelOffsetMode = PixelOffsetMode.HighQuality;
-			_with12.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-			_with12.Clear(BackColor);
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            State = MouseState.None;
+            Invalidate();
+        }
 
-			//-- Colors
-			TB.BackColor = _BaseColor;
-			TB.ForeColor = _TextColor;
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var b = new Bitmap(Width, Height);
+            var g = Graphics.FromImage(b);
+            _w = Width - 1;
+            _h = Height - 1;
 
-			//-- Base
-			_with12.FillRectangle(new SolidBrush(_BaseColor), Base);
+            var Base = new Rectangle(0, 0, _w, _h);
 
-			base.OnPaint(e);
-			G.Dispose();
-			e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-			e.Graphics.DrawImageUnscaled(B, 0, 0);
-			B.Dispose();
-		}
+            var with12 = g;
+            with12.SmoothingMode = SmoothingMode.HighQuality;
+            with12.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            with12.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            with12.Clear(BackColor);
 
-		private void UpdateColors()
-		{
-			FlatColors colors = Helpers.GetColors(this);
+            //-- Colors
+            _tb.BackColor = _baseColor;
+            _tb.ForeColor = TextColor;
 
-			_BorderColor = colors.Flat;
-		}
-	}
+            //-- Base
+            with12.FillRectangle(new SolidBrush(_baseColor), Base);
+
+            base.OnPaint(e);
+            g.Dispose();
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.DrawImageUnscaled(b, 0, 0);
+            b.Dispose();
+        }
+    }
 }

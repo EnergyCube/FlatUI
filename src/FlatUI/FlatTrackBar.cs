@@ -7,260 +7,234 @@ using System.Windows.Forms;
 
 namespace FlatUI
 {
-	[DefaultEvent("Scroll")]
-	public class FlatTrackBar : Control
-	{
-		private int W;
-		private int H;
-		private int Val;
-		private bool Bool;
-		private Rectangle Track;
-		private Rectangle Knob;
-		private _Style Style_;
+    [DefaultEvent("Scroll")]
+    public sealed class FlatTrackBar : Control
+    {
+        public delegate void ScrollEventHandler(object sender);
 
-		protected override void OnMouseDown(MouseEventArgs e)
-		{
-			base.OnMouseDown(e);
-			if (e.Button == System.Windows.Forms.MouseButtons.Left)
-			{
-				Val = Convert.ToInt32((float)(_Value - _Minimum) / (float)(_Maximum - _Minimum) * (float)(Width - 11));
-				Track = new Rectangle(Val, 0, 10, 20);
+        [Flags]
+        public enum ElementStyle
+        {
+            Slider,
+            Knob
+        }
 
-				Bool = Track.Contains(e.Location);
-			}
-		}
+        private readonly Color _baseColor = Color.FromArgb(45, 47, 49);
+        private readonly Color _sliderColor = Color.FromArgb(25, 27, 29);
+        private bool _bool;
+        private int _h;
+        private Rectangle _knob;
 
-		protected override void OnMouseMove(MouseEventArgs e)
-		{
-			base.OnMouseMove(e);
-			if (Bool && e.X > -1 && e.X < (Width + 1))
-			{
-				Value = _Minimum + Convert.ToInt32((float)(_Maximum - _Minimum) * ((float)e.X / (float)Width));
-			}
-		}
+        private int _maximum = 10;
 
-		protected override void OnMouseUp(MouseEventArgs e)
-		{
-			base.OnMouseUp(e);
-			Bool = false;
-		}
+        private int _minimum;
+        private Rectangle _track;
+        private int _val;
 
-		[Flags()]
-		public enum _Style
-		{
-			Slider,
-			Knob
-		}
+        private int _value;
+        private int _w;
 
-		public _Style Style
-		{
-			get { return Style_; }
-			set { Style_ = value; }
-		}
+        public FlatTrackBar()
+        {
+            SetStyle(
+                ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw |
+                ControlStyles.OptimizedDoubleBuffer, true);
 
-		[Category("Colors")]
-		public Color TrackColor
-		{
-			get { return _TrackColor; }
-			set { _TrackColor = value; }
-		}
+            DoubleBuffered = true;
+            Height = 18;
+            BackColor = Color.FromArgb(60, 70, 73);
+        }
 
-		[Category("Colors")]
-		public Color HatchColor
-		{
-			get { return _HatchColor; }
-			set { _HatchColor = value; }
-		}
+        public ElementStyle Style { get; set; }
 
-		public event ScrollEventHandler Scroll;
-		public delegate void ScrollEventHandler(object sender);
+        [Category("Colors")] public Color TrackColor { get; set; } = Helpers.FlatColor;
 
-		private int _Minimum;
-		public int Minimum
-		{
-			get
-			{
-				int functionReturnValue = 0;
-				return functionReturnValue;
-				return functionReturnValue;
-			}
-			set
-			{
-				if (value < 0)
-				{
-				}
+        [Category("Colors")] public Color HatchColor { get; set; } = Color.FromArgb(23, 148, 92);
 
-				_Minimum = value;
+        public int Minimum
+        {
+            get => _minimum;
 
-				if (value > _Value)
-					_Value = value;
-				if (value > _Maximum)
-					_Maximum = value;
-				Invalidate();
-			}
-		}
+            set
+            {
+                if (value < 0) return;
 
-		private int _Maximum = 10;
-		public int Maximum
-		{
-			get { return _Maximum; }
-			set
-			{
-				if (value < 0)
-				{
-				}
+                _minimum = value;
 
-				_Maximum = value;
-				if (value < _Value)
-					_Value = value;
-				if (value < _Minimum)
-					_Minimum = value;
-				Invalidate();
-			}
-		}
+                if (value > _value)
+                    _value = value;
 
-		private int _Value;
-		public int Value
-		{
-			get { return _Value; }
-			set
-			{
-				if (value == _Value)
-					return;
+                if (value > _maximum)
+                    _maximum = value;
 
-				if (value > _Maximum || value < _Minimum)
-				{
-				}
+                Invalidate();
+            }
+        }
 
-				_Value = value;
-				Invalidate();
-				if (Scroll != null)
-				{
-					Scroll(this);
-				}
-			}
-		}
+        public int Maximum
+        {
+            get => _maximum;
+            set
+            {
+                if (value < 0) return;
 
-		private bool _ShowValue = false;
-		public bool ShowValue
-		{
-			get { return _ShowValue; }
-			set { _ShowValue = value; }
-		}
+                _maximum = value;
 
-		protected override void OnKeyDown(KeyEventArgs e)
-		{
-			base.OnKeyDown(e);
-			if (e.KeyCode == Keys.Subtract)
-			{
-				if (Value == 0)
-					return;
-				Value -= 1;
-			}
-			else if (e.KeyCode == Keys.Add)
-			{
-				if (Value == _Maximum)
-					return;
-				Value += 1;
-			}
-		}
+                if (value < _value)
+                    _value = value;
 
-		protected override void OnTextChanged(EventArgs e)
-		{
-			base.OnTextChanged(e);
-			Invalidate();
-		}
+                if (value < _minimum)
+                    _minimum = value;
 
-		protected override void OnResize(EventArgs e)
-		{
-			base.OnResize(e);
-			Height = 23;
-		}
+                Invalidate();
+            }
+        }
 
-		private Color BaseColor = Color.FromArgb(45, 47, 49);
-		private Color _TrackColor = Helpers.FlatColor;
-		private Color SliderColor = Color.FromArgb(25, 27, 29);
-		private Color _HatchColor = Color.FromArgb(23, 148, 92);
+        public int Value
+        {
+            get => _value;
+            set
+            {
+                if (value == _value)
+                    return;
 
-		public FlatTrackBar()
-		{
-			SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer, true);
-			DoubleBuffered = true;
-			Height = 18;
+                if (value > _maximum || value < _minimum) return;
 
-			BackColor = Color.FromArgb(60, 70, 73);
-		}
+                _value = value;
+                Invalidate();
+                Scroll?.Invoke(this);
+            }
+        }
 
-		protected override void OnPaint(PaintEventArgs e)
-		{
-			this.UpdateColors();
+        public bool ShowValue { get; set; }
 
-			Bitmap B = new Bitmap(Width, Height);
-			Graphics G = Graphics.FromImage(B);
-			W = Width - 1;
-			H = Height - 1;
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            if (e.Button == MouseButtons.Left)
+            {
+                _val = Convert.ToInt32((_value - _minimum) / (float) (_maximum - _minimum) * (Width - 11));
+                _track = new Rectangle(_val, 0, 10, 20);
 
-			Rectangle Base = new Rectangle(1, 6, W - 2, 8);
-			GraphicsPath GP = new GraphicsPath();
-			GraphicsPath GP2 = new GraphicsPath();
+                _bool = _track.Contains(e.Location);
+            }
+        }
 
-			var _with20 = G;
-			_with20.SmoothingMode = SmoothingMode.HighQuality;
-			_with20.PixelOffsetMode = PixelOffsetMode.HighQuality;
-			_with20.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
-			_with20.Clear(BackColor);
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            if (_bool && e.X > -1 && e.X < Width + 1)
+                Value = _minimum + Convert.ToInt32((_maximum - _minimum) * (e.X / (float) Width));
+        }
 
-			//-- Value
-			Val = Convert.ToInt32((float)(_Value - _Minimum) / (float)(_Maximum - _Minimum) * (float)(W - 10));
-			Track = new Rectangle(Val, 0, 10, 20);
-			Knob = new Rectangle(Val, 4, 11, 14);
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            _bool = false;
+        }
 
-			//-- Base
-			GP.AddRectangle(Base);
-			_with20.SetClip(GP);
-			_with20.FillRectangle(new SolidBrush(BaseColor), new Rectangle(0, 7, W, 8));
-			_with20.FillRectangle(new SolidBrush(_TrackColor), new Rectangle(0, 7, Track.X + Track.Width, 8));
-			_with20.ResetClip();
+        public event ScrollEventHandler Scroll;
 
-			//-- Hatch Brush
-			HatchBrush HB = new HatchBrush(HatchStyle.Plaid, HatchColor, _TrackColor);
-			_with20.FillRectangle(HB, new Rectangle(-10, 7, Track.X + Track.Width, 8));
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
 
-			//-- Slider/Knob
-			switch (Style)
-			{
-				case _Style.Slider:
-					GP2.AddRectangle(Track);
-					_with20.FillPath(new SolidBrush(SliderColor), GP2);
-					break;
-				case _Style.Knob:
-					GP2.AddEllipse(Knob);
-					_with20.FillPath(new SolidBrush(SliderColor), GP2);
-					break;
-			}
+            switch (e.KeyCode)
+            {
+                case Keys.Subtract when Value == 0:
+                    return;
+                case Keys.Subtract:
+                    Value -= 1;
+                    break;
+                case Keys.Add when Value == _maximum:
+                    return;
+                case Keys.Add:
+                    Value += 1;
+                    break;
+            }
+        }
 
-			//-- Show the value 
-			if (ShowValue)
-			{
-				_with20.DrawString(Value.ToString(), new Font("Segoe UI", 8), Brushes.White, new Rectangle(1, 6, W, H), new StringFormat
-				{
-					Alignment = StringAlignment.Far,
-					LineAlignment = StringAlignment.Far
-				});
-			}
+        protected override void OnTextChanged(EventArgs e)
+        {
+            base.OnTextChanged(e);
+            Invalidate();
+        }
 
-			base.OnPaint(e);
-			G.Dispose();
-			e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-			e.Graphics.DrawImageUnscaled(B, 0, 0);
-			B.Dispose();
-		}
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            Height = 23;
+        }
 
-		private void UpdateColors()
-		{
-			FlatColors colors = Helpers.GetColors(this);
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            UpdateColors();
 
-			_TrackColor = colors.Flat;
-		}
-	}
+            var b = new Bitmap(Width, Height);
+            var g = Graphics.FromImage(b);
+            _w = Width - 1;
+            _h = Height - 1;
+
+            var Base = new Rectangle(1, 6, _w - 2, 8);
+            var gp = new GraphicsPath();
+            var gp2 = new GraphicsPath();
+
+            var with20 = g;
+            with20.SmoothingMode = SmoothingMode.HighQuality;
+            with20.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            with20.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            with20.Clear(BackColor);
+
+            //-- Value
+            _val = Convert.ToInt32((_value - _minimum) / (float) (_maximum - _minimum) * (_w - 10));
+            _track = new Rectangle(_val, 0, 10, 20);
+            _knob = new Rectangle(_val, 4, 11, 14);
+
+            //-- Base
+            gp.AddRectangle(Base);
+            with20.SetClip(gp);
+            with20.FillRectangle(new SolidBrush(_baseColor), new Rectangle(0, 7, _w, 8));
+            with20.FillRectangle(new SolidBrush(TrackColor), new Rectangle(0, 7, _track.X + _track.Width, 8));
+            with20.ResetClip();
+
+            //-- Hatch Brush
+            var hb = new HatchBrush(HatchStyle.Plaid, HatchColor, TrackColor);
+            with20.FillRectangle(hb, new Rectangle(-10, 7, _track.X + _track.Width, 8));
+
+            //-- Slider/Knob
+            switch (Style)
+            {
+                case ElementStyle.Slider:
+                    gp2.AddRectangle(_track);
+                    with20.FillPath(new SolidBrush(_sliderColor), gp2);
+                    break;
+                case ElementStyle.Knob:
+                    gp2.AddEllipse(_knob);
+                    with20.FillPath(new SolidBrush(_sliderColor), gp2);
+                    break;
+            }
+
+            //-- Show the value 
+            if (ShowValue)
+                with20.DrawString(Value.ToString(), new Font("Segoe UI", 8), Brushes.White, new Rectangle(1, 6, _w, _h),
+                    new StringFormat
+                    {
+                        Alignment = StringAlignment.Far,
+                        LineAlignment = StringAlignment.Far
+                    });
+
+            base.OnPaint(e);
+            g.Dispose();
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.DrawImageUnscaled(b, 0, 0);
+            b.Dispose();
+        }
+
+        private void UpdateColors()
+        {
+            var colors = Helpers.GetColors(this);
+
+            TrackColor = colors.Flat;
+        }
+    }
 }
