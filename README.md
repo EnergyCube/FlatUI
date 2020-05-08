@@ -1,22 +1,27 @@
-# FlatUI
+FlatUI
+======
 
-This is a refactored version of Flat UI for .NET applications.
+![Example](screenshots/flatui-example-1.png)
 
-It is a C# port of the Flat UI theme released by iSynthesis, which
+FlatUI is a C# port of the Flat UI theme released by iSynthesis, which
 was written in Visual Basic.
 
 ☑️ Cleaned up code<br/>
 ☑️ Fixed performance<br/>
-☑️ Moved to .NET 4.7<br/>
+☑️ Fixed bugs<br/>
+☑️ Compatible (.NET 2.0)<br/>
 
-Originally ported to C# by [saneki](https://github.com/saneki-discontinued/FlatUI)
+🔨 Get FlatUI
+-------
+Open and build the project to get the dll or download it [here](https://github.com/EnergyCube/FlatUI/releases)
 
-# Screenshot
+📘 Notes
+-------
+The original C# version by saneki can be replaced with this version but some minor modifications will have to be made in your code.
 
-![Example screenshot](screenshots/flatui-example-1.png)
-
-# ❤️ Thanks to
-
-* saneki for porting it to C#
-* iSynthesis for original code
-* AeonHack for parts of the original code
+❤️ Credits
+-------
+- iSynthesis for original code
+- AeonHack for parts of the original code
+- saneki for porting it to C#
+- 0x25CBFC4F for code cleanup and performance fix

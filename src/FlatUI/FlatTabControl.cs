@@ -47,15 +47,6 @@ namespace FlatUI
             with13.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
             with13.Clear(BaseColor);
 
-            try
-            {
-                SelectedTab.BackColor = _bgColor;
-            }
-            catch
-            {
-                // ignored
-            }
-
             for (var i = 0; i <= TabCount - 1; i++)
             {
                 var Base = new Rectangle(new Point(GetTabRect(i).Location.X + 2, GetTabRect(i).Location.Y),
